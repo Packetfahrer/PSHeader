@@ -1,8 +1,8 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <AVFoundation/AVFoundation.h>
-#import <Preferences/PSViewController.h>
-#import <Preferences/PSTableCell.h>
-#import <Preferences/PSControlTableCell.h>
+//#import <Preferences/PSViewController.h>
+//#import <Preferences/PSTableCell.h>
+//#import <Preferences/PSControlTableCell.h>
 
 #define isiOS4 (kCFCoreFoundationVersionNumber >= 550.32 && kCFCoreFoundationVersionNumber < 675.00)
 #define isiOS50 (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 690.10)
@@ -32,7 +32,10 @@
 #define PH_BAR_HEIGHT 80
 
 @interface UIScreen (Addition)
+- (CGFloat)_interfaceOrientation;
+- (CGRect)_interfaceOrientedBounds;
 - (CGRect)_referenceBounds;
+- (CGRect)applicationFrame;
 @end
 
 @interface UIImage (Addition)
@@ -245,7 +248,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 
 @interface PLCameraFlashButton : PLReorientingButton <flashButtonDelegate>
 @property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden; // iOS 5+
-- (id /*PLCameraView **/)delegate;
+- (UIView *)delegate;
 @end
 
 @interface CAMModeDialItem : UIView
@@ -258,6 +261,8 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 
 @interface CAMElapsedTimeView : UIView
 - (void)_beginRecordingAnimation;
+- (void)startTimer;
+- (void)endTimer;
 @end
 
 @interface CAMSlalomIndicatorView : UIView
@@ -277,6 +282,8 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @property(assign, nonatomic) NSInteger style;
 - (NSObject /*<cameraViewDelegate>*/ *)delegate;
 - (NSMutableArray *)_allowedControlsForVideoMode;
+- (BOOL)_isFlashButtonExpanded;
+- (BOOL)_shouldHideFlashButton;
 - (void)setBackgroundStyle:(NSInteger)style animated:(BOOL)animated;
 - (void)setStyle:(NSInteger)style animated:(BOOL)animated;
 - (void)expandMenuButton:(UIButton *)button animated:(BOOL)animated;
@@ -495,6 +502,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @property(readonly, assign, nonatomic) CAMBottomBar *_bottomBar;
 @property(readonly, assign, nonatomic) CAMFlashButton *_flashButton;
 @property(readonly, assign, nonatomic) CAMShutterButton *_stillDuringVideoButton;
+@property(readonly, assign, nonatomic) CAMElapsedTimeView *_elapsedTimeView;
 @property(assign, nonatomic, getter=isTallScreen) BOOL tallScreen;
 @property(readonly, assign, nonatomic) BOOL isCameraReady;
 @property(assign, nonatomic) NSInteger cameraDevice;
@@ -548,6 +556,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 - (void)flashButtonModeDidChange:(NSInteger)mode;
 - (void)_captureStillDuringVideo;
 - (void)_setSwipeToModeSwitchEnabled:(BOOL)enabled;
+- (NSInteger)_glyphOrientationForCameraOrientation:(NSInteger)cameraOrientation;
 @end
 
 @interface PLCameraView : UIView <cameraViewDelegate>
@@ -588,6 +597,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @protocol cameraControllerDelegate
 @property(assign, nonatomic) AVCaptureDevice *currentDevice;
 @property(assign, nonatomic) AVCaptureOutput *currentOutput;
+@property(retain, nonatomic) AVCaptureVideoPreviewLayer *previewLayer;
 @property(readonly, assign, nonatomic) AVCaptureSession *currentSession;
 @property(assign, nonatomic) NSInteger cameraDevice;
 @property(assign, nonatomic) NSInteger cameraMode;
@@ -599,6 +609,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @property(assign, nonatomic) CGFloat videoZoomFactor;
 + (BOOL)isStillImageMode:(NSInteger)mode;
 - (BOOL)isCameraApp;
+- (BOOL)canCaptureVideo;
 - (BOOL)isChangingModes;
 - (BOOL)isReady;
 - (NSMutableArray *)supportedCameraModes;
@@ -614,6 +625,8 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 - (NSUInteger)_activeFilterIndex;
 - (double)mogulFrameRate;
 - (CGFloat)maximumZoomFactorForDevice:(AVCaptureDevice *)device;
+- (BOOL)_lockCurrentDeviceForConfiguration;
+- (void)_unlockCurrentDeviceForConfiguration;
 
 - (void)ToggleMode:(UISwitch *)sender;
 - (void)FlashMode:(UISwitch *)sender;
@@ -820,7 +833,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @property(retain, nonatomic) NSNumber *inputSharpness;
 @end
 
-@interface PSViewController (Addition)
+/*@interface PSViewController (Addition)
 - (void)setView:(id)view;
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath;
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section;
@@ -838,4 +851,28 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 
 @interface PSSwitchTableCell : PSControlTableCell
 - (id)initWithStyle:(NSInteger)arg1 reuseIdentifier:(id)identifier specifier:(id)spec;
+@end*/
+
+@interface SBSRestartRenderServerAction : NSObject
++ (SBSRestartRenderServerAction *)restartActionWithTargetRelaunchURL:(NSURL *)url;
+@end
+
+@interface FBSSystemService : NSObject
++ (FBSSystemService *)sharedService;
+- (void)sendActions:(NSSet *)actions withResult:(id)result;
+@end
+
+@interface FigCaptureStillImageSettings : NSObject
+@property NSUInteger outputWidth;
+@property NSUInteger outputHeight;
+@property NSUInteger thumbnailWidth;
+@property NSUInteger thumbnailHeight;
+@property BOOL outputMirroring;
+@property NSInteger outputOrientation;
+@property BOOL thumbnailEnabled;
+@property BOOL thumbnailMirroring;
+@property NSInteger thumbnailOrientation;
+@property NSInteger flashMode;
+@property NSInteger HDRMode;
+@property CGFloat scaleFactor;
 @end
