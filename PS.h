@@ -222,7 +222,7 @@ extern "C" float __UIBackdropViewSettingsBlurRadiusLarge;*/
     BOOL _selected;
     int _stackingLevel;
     double _statisticsInterval;
-    int _style;
+    NSInteger _style;
     int _suppressSettingsDidChange;
     BOOL _usesBackdropEffectView;
     BOOL _usesColorBurnTintView;
@@ -236,7 +236,7 @@ extern "C" float __UIBackdropViewSettingsBlurRadiusLarge;*/
 @property BOOL appliesTintAndBlurSettings;
 @property(assign) _UIBackdropView * backdrop;
 @property(getter=isBackdropVisible) BOOL backdropVisible;
-@property int blurHardEdges;
+@property NSInteger blurHardEdges;
 @property(copy) NSString *blurQuality;
 @property float blurRadius;
 @property BOOL blursWithHardEdges;
@@ -270,7 +270,6 @@ extern "C" float __UIBackdropViewSettingsBlurRadiusLarge;*/
 @property BOOL lightenGrayscaleWithSourceOver;
 @property int renderingHint;
 @property BOOL requiresColorStatistics;
-@property struct CFRunLoopObserver *runLoopObserver;
 @property float saturationDeltaFactor;
 @property float scale;
 @property(getter=isSelected) BOOL selected;
@@ -341,14 +340,13 @@ extern "C" float __UIBackdropViewSettingsBlurRadiusLarge;*/
 - (int)renderingHint;
 - (BOOL)requiresColorStatistics;
 - (void)restoreDefaultValues;
-- (CFRunLoopObserver *)runLoopObserver;
 - (float)saturationDeltaFactor;
 - (float)scale;
 - (void)scheduleSettingsDidChangeIfNeeded;
 - (void)setAppliesTintAndBlurSettings:(BOOL)arg1;
 - (void)setBackdrop:(_UIBackdropView *)arg1;
 - (void)setBackdropVisible:(BOOL)arg1;
-- (void)setBlurHardEdges:(int)arg1;
+- (void)setBlurHardEdges:(NSInteger)arg1;
 - (void)setBlurQuality:(NSString *)arg1;
 - (void)setBlurRadius:(float)arg1;
 - (void)setBlursWithHardEdges:(BOOL)arg1;
@@ -383,7 +381,6 @@ extern "C" float __UIBackdropViewSettingsBlurRadiusLarge;*/
 - (void)setLightenGrayscaleWithSourceOver:(BOOL)arg1;
 - (void)setRenderingHint:(int)arg1;
 - (void)setRequiresColorStatistics:(BOOL)arg1;
-- (void)setRunLoopObserver:(CFRunLoopObserver *)arg1;
 - (void)setSaturationDeltaFactor:(float)arg1;
 - (void)setScale:(float)arg1;
 - (void)setSelected:(BOOL)arg1;
@@ -514,7 +511,6 @@ extern "C" float __UIBackdropViewSettingsBlurRadiusLarge;*/
 @property(nonatomic) float previousBackdropStatisticsRed; // @synthesize previousBackdropStatisticsRed=_previousBackdropStatisticsRed;
 @property(nonatomic) BOOL blurRadiusSetOnce; // @synthesize blurRadiusSetOnce=_blurRadiusSetOnce;
 @property(nonatomic) BOOL backdropVisibilitySetOnce; // @synthesize backdropVisibilitySetOnce=_backdropVisibilitySetOnce;
-@property(nonatomic) CFRunLoopObserver *updateInputBoundsRunLoopObserver; // @synthesize updateInputBoundsRunLoopObserver=_updateInputBoundsRunLoopObserver;
 @property(nonatomic) int blurHardEdges; // @synthesize blurHardEdges=_blurHardEdges;
 @property(nonatomic) BOOL simulatesMasks; // @synthesize simulatesMasks=_simulatesMasks;
 @property(nonatomic) float colorMatrixColorTintAlpha; // @synthesize colorMatrixColorTintAlpha=_colorMatrixColorTintAlpha;
@@ -640,8 +636,6 @@ extern "C" float __UIBackdropViewSettingsBlurRadiusLarge;*/
     _UIBackdropView *_backdropView;
 }
 @property(assign) _UIBackdropView *backdropView;
-- (void)dealloc;
-- (void)renderInContext:(CGContext *)arg1;
 @end
 
 @interface _UIBackdropViewSettingsNone : _UIBackdropViewSettings
@@ -756,7 +750,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 - (void)makeInvisible;
 @end
 
-@interface PLCropOverlayBottomBar
+@interface PLCropOverlayBottomBar : UIToolbar
 - (void)_setVisibility:(BOOL)visible;
 @end
 
@@ -899,9 +893,16 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @end
 
 @interface CAMElapsedTimeView : UIView
+@property(readonly) UILabel *_timeLabel;
+@property(readonly) UIImageView *_recordingImageView;
+@property(readonly) NSTimer *_updateTimer;
+@property(readonly) NSDate *_startTime;
 - (void)_beginRecordingAnimation;
+- (void)_endRecordingAnimation;
 - (void)startTimer;
 - (void)endTimer;
+- (void)resetTimer;
+- (void)_update:(NSTimer *)timer;
 @end
 
 @interface CAMSlalomIndicatorView : UIView
@@ -960,7 +961,15 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 - (CAMAvalancheSession *)_activeAvalancheSession;
 @end
 
-@interface CAMPreviewView : UIView
+@protocol cameraPreviewViewDelegate
+@property float dimmingStrength;
+- (void)setDimmingStrength:(float)strength duration:(double)duration;
+@end
+
+@interface CAMPreviewView : UIView <cameraPreviewViewDelegate>
+@end
+
+@interface PLCameraPreviewView : UIView <cameraPreviewViewDelegate>
 @end
 
 @interface PLPreviewOverlayView : UIView
@@ -1209,6 +1218,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @interface PLCameraView : UIView <cameraViewDelegate>
 @property(retain, nonatomic) UIToolbar *bottomButtonBar;
 @property NSInteger photoFlashMode;
+//- (PLVideoPreviewView *)videoPreviewView;
 - (BOOL)_isStillImageMode:(NSInteger)mode;
 - (void)_setSettingsButtonAlpha:(CGFloat)alpha duration:(double)duration;
 - (void)_disableBottomBarForContinuousCapture;
@@ -1228,6 +1238,7 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 - (NSInteger)_HDRMode;
 - (NSInteger)_currentTimerDuration;
 - (NSInteger)_remainingDelayedCaptureTicks;
+- (CAMPreviewView *)previewView;
 - (BOOL)_shouldUseAvalancheForDelayedCapture;
 - (BOOL)_avalancheCaptureInProgress;
 - (void)_startDelayedCapture;
@@ -1256,13 +1267,14 @@ extern NSInteger _UILegibilityViewOptionUsesColorFilters;
 @property(assign, nonatomic, getter=isHDREnabled) BOOL HDREnabled;
 @property(retain) NSObject <cameraEffectsRendererDelegate> *effectsRenderer;
 @property(assign, nonatomic) CGFloat videoZoomFactor;
+@property(getter=_isPreviewPaused, setter=_setPreviewPaused:) BOOL _previewPaused;
 + (BOOL)isStillImageMode:(NSInteger)mode;
 - (BOOL)isCameraApp;
 - (BOOL)canCaptureVideo;
 - (BOOL)isChangingModes;
 - (BOOL)isReady;
 - (NSMutableArray *)supportedCameraModes;
-- (NSObject <cameraViewDelegate> *)delegate;
+- (UIView <cameraViewDelegate> *)delegate;
 - (BOOL)isCapturingVideo;
 - (void)_setFlashMode:(NSInteger)mode force:(BOOL)force;
 - (void)_suggestedHDRChanged;
